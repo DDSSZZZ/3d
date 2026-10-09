@@ -62,7 +62,7 @@ mesh = trimesh.Trimesh(vertices=verts, faces=faces, process=True)
 mesh.remove_unreferenced_vertices()
 if not mesh.is_watertight:
     mesh = mesh.fill_holes()
-mesh.export(OUT / "qing_hua_integrated.stl")
+mesh.export(OUT / "qing_hua_integrated.stl", file_type="stl_ascii")
 
 def save_projection(mask, title, path):
     # Render the true raster silhouette used to construct the volume.
