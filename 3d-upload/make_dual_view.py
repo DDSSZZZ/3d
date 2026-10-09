@@ -10,6 +10,7 @@ SIZE = 144
 VOXEL_MM = 0.6
 SPAN_MM = 72.0
 FONT_CANDIDATES = [
+    "/usr/share/fonts/truetype/lxgw-wenkai/LXGWWenKai-Regular.ttf",
     "/usr/share/fonts/opentype/noto/NotoSerifCJK-Regular.ttc",
     "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
     "/usr/share/fonts/truetype/noto/NotoSerifCJK-Regular.ttc",
@@ -39,7 +40,7 @@ def glyph_mask(char):
     return mask
 
 qing = glyph_mask("清")      # front projection: x-z
-hua = glyph_mask("华")       # side projection: y-z
+hua = glyph_mask("華")       # side projection: y-z
 
 # Scale the two orthogonal calligraphic silhouettes to a shared physical height.
 # The voxel solid is their visual-hull intersection: Q(x,z) AND H(y,z).
@@ -74,14 +75,14 @@ def save_projection(mask, title, path):
     im.save(path)
 
 save_projection(qing, "Front orthographic projection: 清", OUT / "projection_qing.png")
-save_projection(hua, "Side orthographic projection: 华", OUT / "projection_hua.png")
+save_projection(hua, "Side orthographic projection: 華", OUT / "projection_hua.png")
 report = {
     "model": "qing_hua_integrated.stl",
     "method": "orthogonal visual-hull intersection of two glyph masks",
     "units": "mm",
     "voxel_mm": VOXEL_MM,
     "front_projection": "清",
-    "side_projection_after_90_degree_rotation": "华",
+    "side_projection_after_90_degree_rotation": "華",
     "surface_text_or_engraving": False,
     "watertight": bool(mesh.is_watertight),
     "vertices": int(len(mesh.vertices)),
