@@ -19,9 +19,25 @@ if mesh_obj is None:
     raise RuntimeError("Blender failed to import the generated visual-hull mesh.")
 mesh_obj.name = "QING_FRONT_HUA_SIDE_SINGLE_VISUAL_HULL"
 mesh_obj.data.name = "Integrated_Calligraphic_Solid"
-material = bpy.data.materials.new("Matte charcoal bronze")
-material.diffuse_color = (0.20, 0.23, 0.25, 1)
+material = bpy.data.materials.new("Han dynasty warm stoneware")
+material.diffuse_color = (0.62, 0.49, 0.32, 1)
 mesh_obj.data.materials.append(material)
+# Refine the existing glyph-volume as a single architectural mass. The small,
+# two-segment bevel softens voxel edges into eave-like arrises and terrace steps
+# without adding separate roofs, columns, platforms, or any new protruding parts.
+bevel = mesh_obj.modifiers.new("Shallow architectural arris", "BEVEL")
+bevel.width = 0.65
+bevel.segments = 2
+bevel.profile = 0.55
+bevel.limit_method = "ANGLE"
+bevel.angle_limit = 0.45
+bevel.harden_normals = True
+bevel.show_viewport = True
+bevel.show_render = True
+weighted = mesh_obj.modifiers.new("Architectural weighted normals", "WEIGHTED_NORMAL")
+weighted.keep_sharp = True
+weighted.weight = 35
+
 for poly in mesh_obj.data.polygons:
     poly.use_smooth = True
 
