@@ -5,6 +5,7 @@ on:
     paths:
       - "3d-upload/make_dual_view.py"
       - "3d-upload/validate_output.py"
+      - "3d设计/create_qing_hua_blend.py"
       - ".github/workflows/generate-model.yml"
   workflow_dispatch:
 
@@ -17,15 +18,19 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.x"
+
       - name: Generate STL and projections
         run: python 3d-upload/make_dual_view.py
+
       - name: Validate generated outputs
         run: python 3d-upload/validate_output.py
-      - name: Upload generated model files
+
+      - name: Upload STL and projections
         uses: actions/upload-artifact@v4
         with:
           name: qing-hua-model-output
@@ -34,5 +39,24 @@ jobs:
             3d-upload/projection_qing.svg
             3d-upload/projection_hua.svg
             3d-upload/projection_check.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Install Blender and Chinese fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y blender fonts-noto-cjk
+
+      - name: Generate editable Blender project
+        working-directory: 3d设计
+        run: blender --background --python create_qing_hua_blend.py
+
+      - name: Upload Blender project
+        uses: actions/upload-artifact@v4
+        with:
+          name: qing-hua-blender-project
+          path: |
+            3d设计/qing_hua_boolean_editable.blend
+            3d设计/qing_hua_boolean.stl
           if-no-files-found: error
           retention-days: 30
