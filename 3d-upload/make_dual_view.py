@@ -21,6 +21,42 @@ if font_path is None:
     raise RuntimeError("Chinese CJK font not found; install fonts-noto-cjk before generating the model.")
 font = ImageFont.truetype(font_path, 116)
 
+def connect_mask_components(mask, bridge_width=7):
+    """Join disconnected glyph fragments with short, rounded calligraphic bridges."""
+    from scipy.ndimage import label
+    from scipy.spatial import cKDTree
+
+    connected = mask.copy()
+    while True:
+        labels, count = label(connected)
+        if count <= 1:
+            return connected
+        sizes = np.bincount(labels.ravel())
+        sizes[0] = 0
+        main_label = int(np.argmax(sizes))
+        main_yx = np.argwhere(labels == main_label)
+        other_labels = [i for i in range(1, count + 1) if i != main_label]
+        tree = cKDTree(main_yx)
+        # Join the nearest remaining component to the main connected stroke.
+        best = None
+        for component_label in other_labels:
+            pts = np.argwhere(labels == component_label)
+            distances, indices = tree.query(pts, k=1)
+            j = int(np.argmin(distances))
+            candidate = (float(distances[j]), pts[j], main_yx[int(indices[j])])
+            if best is None or candidate[0] < best[0]:
+                best = candidate
+        _, a, b = best
+        canvas = Image.fromarray((connected.astype(np.uint8) * 255), mode="L")
+        draw = ImageDraw.Draw(canvas)
+        draw.line((int(a[1]), int(a[0]), int(b[1]), int(b[0])),
+                  fill=255, width=bridge_width)
+        # Rounded bridge ends avoid sharp, fragile joints.
+        r = bridge_width // 2
+        for x, y in ((int(a[1]), int(a[0])), (int(b[1]), int(b[0]))):
+            draw.ellipse((x-r, y-r, x+r, y+r), fill=255)
+        connected = np.asarray(canvas) >= 128
+
 def glyph_mask(char):
     image = Image.new("L", (SIZE, SIZE), 0)
     draw = ImageDraw.Draw(image)
@@ -37,6 +73,8 @@ def glyph_mask(char):
     yy, xx = np.indices(mask.shape)
     dry = ((xx * 17 + yy * 31 + (xx * yy) % 23) % 211 == 0)
     mask &= ~dry
+    # Restore connectivity after dry-brush cuts, then bridge any detached glyph pieces.
+    mask = connect_mask_components(mask, bridge_width=7)
     return mask
 
 qing = glyph_mask("清")      # front projection: x-z
@@ -84,6 +122,9 @@ report = {
     "front_projection": "清",
     "side_projection_after_90_degree_rotation": "華",
     "surface_text_or_engraving": False,
+    "front_mask_connected": bool(__import__("scipy").ndimage.label(qing)[1] == 1),
+    "side_mask_connected": bool(__import__("scipy").ndimage.label(hua)[1] == 1),
+    "mesh_connected_components": int(len(mesh.split(only_watertight=False))),
     "watertight": bool(mesh.is_watertight),
     "vertices": int(len(mesh.vertices)),
     "faces": int(len(mesh.faces)),
