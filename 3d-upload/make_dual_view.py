@@ -45,8 +45,8 @@ hua = glyph_mask("华")       # side projection: y-z
 # The voxel solid is their visual-hull intersection: Q(x,z) AND H(y,z).
 # It is one integrated volume, not letters attached to surfaces.
 n = SIZE
-q = qing
-h = hua
+q = qing.T  # raster rows become vertical Z; columns become X
+h = hua.T  # same vertical Z, columns become Y
 solid = q[:, None, :] & h[None, :, :]
 # Close tiny one-voxel gaps and add a modest structural margin at the bottom so the form is printable.
 from scipy.ndimage import binary_closing
