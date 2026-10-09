@@ -1,0 +1,38 @@
+name: Generate and validate 3D model
+
+on:
+  push:
+    paths:
+      - "3d-upload/make_dual_view.py"
+      - "3d-upload/validate_output.py"
+      - ".github/workflows/generate-model.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Generate STL and projections
+        run: python 3d-upload/make_dual_view.py
+      - name: Validate generated outputs
+        run: python 3d-upload/validate_output.py
+      - name: Upload generated model files
+        uses: actions/upload-artifact@v4
+        with:
+          name: qing-hua-model-output
+          path: |
+            3d-upload/qing_hua_integrated.stl
+            3d-upload/projection_qing.svg
+            3d-upload/projection_hua.svg
+            3d-upload/projection_check.json
+          if-no-files-found: error
+          retention-days: 30
